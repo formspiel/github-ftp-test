@@ -39,6 +39,9 @@ Say:
 > **Always excluded (never deploy these):**
 > - `**/.git*` and `**/.git*/**` — git metadata
 > - `.github/**` — workflow files
+> - `.claude/**` and `CLAUDE.md` — Claude session files (deploying these caused a real ECONNRESET failure when the action tried to create the `.claude/` directory on the server)
+> - `**/*.md` — documentation files
+> - `lighthouserc.json` — CI config, not web content
 >
 > **Suggested for this project** *(remove any that should actually be deployed)*:
 > - `**/node_modules/**` — if `package.json` is present
@@ -103,6 +106,10 @@ jobs:
             **/.git*/**
             **/node_modules/**
             .github/**
+            .claude/**
+            CLAUDE.md
+            lighthouserc.json
+            **/*.md
           log-level: verbose
           dry-run: false
 ```

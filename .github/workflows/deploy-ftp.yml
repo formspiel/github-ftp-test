@@ -30,6 +30,9 @@ jobs:
             **/.git*/**
             **/node_modules/**
             .github/**
-            WORKFLOW_DEBUG.md
+            .claude/**
+            CLAUDE.md
+            lighthouserc.json
+            **/*.md
           log-level: verbose
           dry-run: false
