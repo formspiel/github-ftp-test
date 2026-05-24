@@ -107,28 +107,113 @@ Remove it once confirmed.
 
 ---
 
-## Common adjustments
+## Configuration options — choose what fits the project
 
-**Built frontend (Vite, Next.js, etc.):**
+When setting up for a new repo, ask the user which configuration fits best
+and adjust `lighthouserc.json` accordingly. Present these options:
+
+---
+
+### Option 1 — Accessibility only, 100% (current default)
+
+Strictest accessibility gate. Any single violation blocks the merge.
+Best for projects where accessibility is the primary concern.
+
 ```json
-"staticDistDir": "./dist"
+{
+  "ci": {
+    "collect": { "staticDistDir": "./" },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 1 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}
 ```
 
-**Scan a specific URL instead of local files:**
-Replace `staticDistDir` with:
+---
+
+### Option 2 — Accessibility only, 90%
+
+Slightly more lenient — allows minor issues through. Good for projects
+that are still being improved toward full compliance.
+
 ```json
-"url": ["https://your-staging-url.com"]
+{
+  "ci": {
+    "collect": { "staticDistDir": "./" },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.9 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}
 ```
 
-**Make performance a hard failure:**
+---
+
+### Option 3 — Accessibility + Best Practices + SEO
+
+Broader quality gate. Accessibility blocks the merge; the others warn
+but don't fail. Good for projects where overall quality matters.
+
 ```json
-"categories:performance": ["error", { "minScore": 0.8 }]
+{
+  "ci": {
+    "collect": { "staticDistDir": "./" },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 1 }],
+        "categories:best-practices": ["warn", { "minScore": 0.8 }],
+        "categories:seo": ["warn", { "minScore": 0.8 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}
 ```
 
-**Skip a category entirely:**
+---
+
+### Option 4 — Everything as hard failures
+
+Maximum strictness. All four categories must meet their threshold or
+the merge is blocked. Only use this for projects with stable, predictable
+performance scores (i.e. served via CDN, not raw GitHub Pages).
+
 ```json
-"categories:seo": ["off"]
+{
+  "ci": {
+    "collect": { "staticDistDir": "./" },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 1 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "categories:seo": ["error", { "minScore": 0.9 }],
+        "categories:performance": ["error", { "minScore": 0.8 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}
 ```
+
+⚠️ See hard rule #1 before enabling performance as an error.
+
+---
+
+### Adjusting the source directory
+
+| Project type | Setting |
+|---|---|
+| Static HTML at repo root | `"staticDistDir": "./"` |
+| Built frontend (Vite, Next.js) | `"staticDistDir": "./dist"` |
+| Custom public folder | `"staticDistDir": "./public"` |
+| Remote staging URL | replace `staticDistDir` with `"url": ["https://staging.example.com"]` |
 
 ---
 
