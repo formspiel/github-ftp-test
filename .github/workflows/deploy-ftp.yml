@@ -21,8 +21,8 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }}
-          protocol: ftp
-          # Passive mode is the default for this action
+          protocol: ftps
+          # ftps = explicit TLS over port 21 (AUTH TLS); avoids IPv6 EPSV data socket resets
           server-dir: /
           local-dir: ./
           exclude: |
