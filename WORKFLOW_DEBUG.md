@@ -9,7 +9,7 @@ Location: `.github/workflows/deploy-ftp.yml`
 | Setting | Value |
 |---|---|
 | Trigger | Push to `main` branch |
-| Action | `SamKirkland/FTP-Deploy-Action@4.3.5` |
+| Action | `SamKirkland/FTP-Deploy-Action@v4.4.0` |
 | FTP server | `${{ secrets.FTP_SERVER }}` (w01*****.kasserver.com) |
 | FTP username | `${{ secrets.FTP_USERNAME }}` (f018508e) |
 | FTP port | `${{ secrets.FTP_PORT }}` (21) |
