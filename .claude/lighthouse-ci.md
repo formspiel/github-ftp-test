@@ -59,9 +59,7 @@ Create `lighthouserc.json` at the repo root:
     },
     "assert": {
       "assertions": {
-        "categories:accessibility": ["error", { "minScore": 0.9 }],
-        "categories:best-practices": ["warn", { "minScore": 0.8 }],
-        "categories:seo": ["warn", { "minScore": 0.8 }]
+        "categories:accessibility": ["error", { "minScore": 1 }]
       }
     },
     "upload": {
