@@ -61,12 +61,36 @@ Configure these under **Settings → Secrets and variables → Actions**:
 
 ## Common Errors & What to Check
 
-| Error | Likely cause |
-|---|---|
-| `Login incorrect` | FTP_USERNAME or FTP_PASSWORD secret is wrong |
-| `Connection refused` / timeout | FTP_SERVER hostname or FTP_PORT is wrong; check firewall |
-| `550 Permission denied` | FTP user lacks write access to the target directory |
-| `No files uploaded` | Check `local-dir` and `exclude` patterns in the workflow |
+| Error | Likely cause | Fix |
+|---|---|---|
+| `ECONNRESET` on data socket | Runner connected via IPv6-mapped socket; kasserver drops IPv6 data connections | Add **Disable IPv6** step (see below) |
+| `Login incorrect` | FTP_USERNAME or FTP_PASSWORD secret is wrong | Double-check secrets in repo settings |
+| `Connection refused` / timeout | FTP_SERVER hostname or FTP_PORT is wrong | Check firewall and hosting panel |
+| `550 Permission denied` | FTP user lacks write access to the target directory | Adjust `server-dir` path |
+| `No files uploaded` | Wrong `local-dir` or overly broad `exclude` patterns | Review workflow config |
+
+### ECONNRESET — root cause and fix
+
+**Root cause:** Node.js on some GitHub Actions runners connects via an IPv4-mapped
+IPv6 socket (`::ffff:x.x.x.x`). The `basic-ftp` library reads `socket.remoteFamily`,
+gets `'IPv6'`, and uses EPSV for the data connection. Kasserver drops IPv6 data
+connections, so the upload fails with ECONNRESET.
+
+**Why it's non-deterministic:** runners differ in whether IPv6 is active. Runs on
+IPv4-only runners succeed silently; runs on IPv6-enabled runners fail. This is why
+earlier test runs may have passed.
+
+**Fix:** disable IPv6 on the runner before the deploy step:
+
+```yaml
+- name: Disable IPv6
+  run: |
+    sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+```
+
+**Does NOT fix it:** editing `/etc/gai.conf` — that only changes DNS address-selection
+preference, not the socket address family that `basic-ftp` reads.
 
 ---
 

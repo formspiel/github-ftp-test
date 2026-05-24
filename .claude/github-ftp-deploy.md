@@ -91,6 +91,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Disable IPv6
+        run: |
+          sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
       - name: Deploy to FTP server
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -150,7 +155,7 @@ After pushing, monitor the Actions tab. Common errors and their fixes:
 | Error | Fix |
 |---|---|
 | `unable to find version` | The tag format is wrong — it must be exactly `@v4.4.0` (with `v`) |
-| `ECONNRESET` on data socket | Change `protocol: ftp` to `protocol: ftps` — never use plain `ftp` |
+| `ECONNRESET` on data socket | Add the **Disable IPv6** step before the deploy step (see Hard rules) |
 | `Login incorrect` | A secret value is wrong — double-check FTP_USERNAME and FTP_PASSWORD |
 | `550 Permission denied` | FTP user lacks write access to `server-dir` — adjust the path |
 | `No files uploaded` | Check `local-dir` and `exclude` patterns |
@@ -159,11 +164,34 @@ After pushing, monitor the Actions tab. Common errors and their fixes:
 
 ## Hard rules — never break these
 
-1. **Always use `protocol: ftps`**, never `protocol: ftp`.
-   Plain FTP causes `ECONNRESET` on the data socket when the runner connects via IPv6.
+1. **Always include the Disable IPv6 step** before the deploy step.
 
-2. **Use exactly `@v4.4.0`** — this is the verified working version. Do not look up the
+   GitHub Actions runners differ in whether IPv6 is active. When a runner connects
+   via an IPv4-mapped IPv6 socket (`::ffff:x.x.x.x`), the `basic-ftp` library reads
+   `socket.remoteFamily` as `'IPv6'` and picks EPSV for the data connection. Kasserver
+   drops IPv6 data connections, causing `ECONNRESET` during file upload.
+
+   This is non-deterministic — runs on IPv4-only runners silently succeed; runs on
+   IPv6-enabled runners fail. Disabling IPv6 on the runner before the deploy forces
+   a plain IPv4 connection and makes behaviour consistent.
+
+   ```yaml
+   - name: Disable IPv6
+     run: |
+       sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+       sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+   ```
+
+   **Does NOT fix it:** editing `/etc/gai.conf` — that only changes DNS address-selection
+   preference, not the socket address family that `basic-ftp` reads.
+
+2. **Always use `protocol: ftps`**, never `protocol: ftp`.
+   Plain FTP transmits credentials in cleartext. `ftps` secures the control connection
+   via `AUTH TLS`. Note: `ftps` alone does not fix the ECONNRESET — the Disable IPv6
+   step is also required.
+
+3. **Use exactly `@v4.4.0`** — this is the verified working version. Do not look up the
    latest release or substitute a different tag. Tags without the `v` prefix do not exist.
    Only update the version if the user explicitly asks to upgrade.
 
-3. **Never hardcode credentials**. Always use `${{ secrets.* }}`.
+4. **Never hardcode credentials**. Always use `${{ secrets.* }}`.
