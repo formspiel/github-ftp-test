@@ -98,7 +98,7 @@ After pushing, monitor the Actions tab. Common errors and their fixes:
 
 | Error | Fix |
 |---|---|
-| `unable to find version` | The action tag is wrong — always use `v` prefix: `@v4.4.0` |
+| `unable to find version` | The tag format is wrong — it must be exactly `@v4.4.0` (with `v`) |
 | `ECONNRESET` on data socket | Change `protocol: ftp` to `protocol: ftps` — never use plain `ftp` |
 | `Login incorrect` | A secret value is wrong — double-check FTP_USERNAME and FTP_PASSWORD |
 | `550 Permission denied` | FTP user lacks write access to `server-dir` — adjust the path |
@@ -111,8 +111,8 @@ After pushing, monitor the Actions tab. Common errors and their fixes:
 1. **Always use `protocol: ftps`**, never `protocol: ftp`.
    Plain FTP causes `ECONNRESET` on the data socket when the runner connects via IPv6.
 
-2. **Always use the `v` prefix on the action tag**: `@v4.4.0`, not `@4.3.5`.
-   Tags without `v` do not exist and will cause "unable to find version" errors.
-   Verify the latest release at https://github.com/SamKirkland/FTP-Deploy-Action/releases.
+2. **Use exactly `@v4.4.0`** — this is the verified working version. Do not look up the
+   latest release or substitute a different tag. Tags without the `v` prefix do not exist.
+   Only update the version if the user explicitly asks to upgrade.
 
 3. **Never hardcode credentials**. Always use `${{ secrets.* }}`.
