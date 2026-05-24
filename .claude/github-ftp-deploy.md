@@ -22,10 +22,54 @@ Wait for the user's answer before proceeding. Use their chosen branch in the wor
 
 ---
 
-## Step 2 — Create the workflow file
+## Step 2 — Ask about excluded files
+
+Before writing the workflow, look at the repository contents and ask the user which
+files and folders should NOT be deployed to the server.
+
+First, scan the repo for common patterns and tell the user what you found.
+Then present the proposed exclude list and ask for confirmation.
+
+Say:
+
+> "These files and folders will be excluded from deployment. The first group is
+> always excluded — the rest I'm suggesting based on what I see in this repo.
+> Please confirm or adjust:"
+>
+> **Always excluded (never deploy these):**
+> - `**/.git*` and `**/.git*/**` — git metadata
+> - `.github/**` — workflow files
+>
+> **Suggested for this project** *(remove any that should actually be deployed)*:
+> - `**/node_modules/**` — if `package.json` is present
+> - `**/vendor/**` — if `composer.json` is present
+> - `**/.env*` — environment files (never deploy these)
+> - `**/tests/**` or `**/test/**` — test suites
+> - `**/dist/**` — build output, if the server should build itself
+> - `**/*.md` — documentation files (README, CHANGELOG, etc.)
+> - `.claude/**` and `CLAUDE.md` — Claude session files
+>
+> "Are there other files or folders in this repo that should stay off the server?"
+
+Wait for the user's answer. Build the final exclude list from their response.
+
+Common project types for reference:
+
+| Project type | Typical extra excludes |
+|---|---|
+| Static HTML site | `**/*.md` |
+| Node.js app | `**/node_modules/**`, `**/.env*` |
+| PHP / WordPress | `**/vendor/**`, `**/.env*`, `**/tests/**` |
+| Built frontend (e.g. Vite) | everything except `dist/**` — use `local-dir: ./dist/` instead |
+| WordPress theme/plugin | `**/node_modules/**`, `**/vendor/**`, `**/.env*`, `**/tests/**` |
+
+---
+
+## Step 3 — Create the workflow file
 
 Create `.github/workflows/deploy-ftp.yml` with the following content,
-substituting `BRANCH` with the branch the user chose in Step 1:
+substituting `BRANCH` with the branch chosen in Step 1 and the `exclude` block
+with the list agreed in Step 2:
 
 ```yaml
 name: Deploy via FTP
@@ -65,7 +109,7 @@ jobs:
 
 ---
 
-## Step 3 — Confirm GitHub Secrets are configured
+## Step 4 — Confirm GitHub Secrets are configured
 
 Tell the user:
 
@@ -85,14 +129,14 @@ If they need to add them, wait for confirmation before proceeding.
 
 ---
 
-## Step 4 — Commit and push
+## Step 5 — Commit and push
 
 Commit the workflow file and push to the repository.
 If the trigger branch doesn't exist yet, create it.
 
 ---
 
-## Step 5 — Verify the run
+## Step 6 — Verify the run
 
 After pushing, monitor the Actions tab. Common errors and their fixes:
 
